@@ -1,0 +1,108 @@
+DROP DATABASE IF EXISTS ecommerce;
+CREATE DATABASE ecommerce;
+USE ecommerce;
+
+-- =====================================
+-- CRIAÇÃO DAS TABELAS
+-- =====================================
+-- Tabela Clientes: Armazena as informações dos clientes.
+CREATE TABLE IF NOT EXISTS clientes (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    cpf VARCHAR(20) UNIQUE NOT NULL,
+    senha VARCHAR(100) NOT NULL
+);
+
+-- Tabela Produtos: Contém os produtos disponíveis para venda.
+CREATE TABLE IF NOT EXISTS produtos (
+    id_produto INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    estoque INT NOT NULL,
+    preco DECIMAL(10,2) NOT NULL
+);
+
+-- Tabela Pedidos: Registra os pedidos feitos pelos clientes.
+CREATE TABLE IF NOT EXISTS pedidos (
+    id_pedido INT PRIMARY KEY AUTO_INCREMENT,
+    id_cliente INT NOT NULL,
+    data_pedido DATE NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+-- Tabela Itens do Pedido: Conecta os pedidos aos produtos e armazena detalhes de cada item.
+CREATE TABLE IF NOT EXISTS itens_pedido (
+    id_item INT PRIMARY KEY AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_produto INT NOT NULL,
+    quantidade INT NOT NULL,
+    preco_unitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
+    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto)
+);
+
+-- =====================================
+-- INSERÇÃO DE DADOS EXEMPLO
+-- =====================================
+-- Populando as tabelas com dados de exemplo.
+INSERT INTO clientes (nome, email, cpf, senha) VALUES
+('Júllya Souza', 'júllya@email.com', '111.222.333-44', 'senha123'),
+('Erik Eike', 'erik@email.com', '555.666.777-88', 'senha456');
+
+INSERT INTO produtos (nome, estoque, preco) VALUES
+('Notebook', 5, 3500.00),
+('Mouse', 50, 80.00),
+('Teclado', 8, 120.00);
+
+INSERT INTO pedidos (id_cliente, data_pedido) VALUES
+(1, '2025-09-01'),
+(2, '2025-09-10');
+
+INSERT INTO itens_pedido (id_pedido, id_produto, quantidade, preco_unitario) VALUES
+(1, 1, 1, 3500.00),
+(1, 2, 2, 80.00),
+(2, 3, 1, 120.00);
+
+-- =====================================
+-- CRIAÇÃO DAS VIEWS
+-- =====================================
+-- 1) View de Consolidação/Relatório
+CREATE OR REPLACE VIEW v_pedidos_detalhados AS
+SELECT 
+    c.id_cliente,
+    c.nome AS cliente,
+    p.id_pedido,
+    p.data_pedido,
+    pr.nome AS produto,
+    ip.quantidade,
+    ip.preco_unitario,
+    (ip.quantidade * ip.preco_unitario) AS total_item
+FROM pedidos p
+JOIN clientes c ON p.id_cliente = c.id_cliente
+JOIN itens_pedido ip ON p.id_pedido = ip.id_pedido
+JOIN produtos pr ON ip.id_produto = pr.id_produto;
+
+-- 2) View de Segurança e Acesso
+CREATE OR REPLACE VIEW v_clientes_sem_senha AS
+SELECT 
+    id_cliente,
+    nome,
+    email,
+    cpf
+FROM clientes;
+
+-- 3) View de Lógica de Negócios e Filtro
+CREATE OR REPLACE VIEW v_resumo_estoque_baixo AS
+SELECT 
+    id_produto,
+    nome AS produto,
+    estoque
+FROM produtos
+WHERE estoque < 10;
+
+-- =====================================
+-- TESTES NAS VIEWS
+-- =====================================
+SELECT * FROM v_pedidos_detalhados;
+SELECT * FROM v_clientes_sem_senha;
+SELECT * FROM v_resumo_estoque_baixo;

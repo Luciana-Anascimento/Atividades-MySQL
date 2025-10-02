@@ -1,0 +1,36 @@
+DROP DATABASE IF EXISTS logistica;
+CREATE DATABASE logistica
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE logistica;
+
+-- 2. Criar a tabela pedidos
+
+CREATE TABLE pedidos (
+    id_pedido INT AUTO_INCREMENT PRIMARY KEY,
+    data_pedido DATE NOT NULL,
+    status ENUM('Pendente','Processando','Concluído','Cancelado') NOT NULL
+);
+
+-- 3. Inserir dados de exemplo
+
+INSERT INTO pedidos (data_pedido, status) VALUES
+('2025-09-20', 'Pendente'),
+('2025-09-21', 'Processando'),
+('2025-09-22', 'Concluído'),
+('2025-09-23', 'Cancelado'),
+('2025-09-24', 'Pendente');
+
+-- 4. Criar ou atualizar a VIEW
+
+CREATE OR REPLACE VIEW PedidosPendentes AS
+SELECT
+    id_pedido,
+    data_pedido,
+    status
+FROM pedidos
+WHERE status IN ('Pendente', 'Processando');
+
+-- 5. Testar a view
+
+SELECT * FROM PedidosPendentes;
